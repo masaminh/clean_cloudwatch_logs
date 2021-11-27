@@ -4,6 +4,7 @@ import * as cdk from '@aws-cdk/core';
 import { CleanCloudwatchLogsStack } from '../lib/clean_cloudwatch_logs-stack';
 
 const app = new cdk.App();
+// eslint-disable-next-line no-new
 new CleanCloudwatchLogsStack(app, 'CleanCloudwatchLogsStack', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
