@@ -16,11 +16,6 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // LogStream単位で動くStateMachine
-    const stateMachineLogStream = new sfn.StateMachine(this, 'StateMachineLogStream', {
-      definition: this.createLogStreamFlowMap(),
-    });
-
     const getEventTime = new tasks.EvaluateExpression(this, 'GetEventTime', {
       expression: 'Date.parse($.time)',
       resultPath: '$.eventTime',
@@ -30,6 +25,9 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       expression: '$.eventTime - 7 * 24 * 60 * 60 * 1000',
       resultPath: '$.targetTime',
     });
+
+    // 本来であれば１回でLogGroupを取り切れる保証はないが、
+    // 現在の運用では1回で取り切れるため、DescribeLogGroupsの繰り返しは行わない
     const describeLogGroups = new tasks.CallAwsService(this, 'DescribeLogGroups', {
       service: 'cloudwatchlogs',
       action: 'describeLogGroups',
@@ -46,7 +44,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
         'eventTime.$': '$.eventTime',
       },
       maxConcurrency: 1,
-    }).iterator(this.createLogGroupFlow(stateMachineLogStream));
+    }).iterator(this.createLogGroupFlow());
 
     const stateMachine = new sfn.StateMachine(this, 'StateMachine', {
       definition: getEventTime
@@ -63,7 +61,13 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     });
   }
 
-  private createLogGroupFlow(stateMachineLogStreamFlow: sfn.IStateMachine): sfn.IChainable {
+  private createLogGroupFlow(): sfn.IChainable {
+    // LogGroup単位で動作するフロー。
+    // ・LogGroupが作られてから7日たっていない場合は無操作
+    // ・LogGroupに保持期間設定がなされていない場合は30日に設定
+    // ・LogGroupにLogStreamがない場合、LogGroupを削除
+    // ・上記以外の場合、LogStreamの整理を行う
+
     const setRetentionInDays = new tasks.CallAwsService(this, 'SetRetentionInDays', {
       service: 'cloudwatchlogs',
       action: 'putRetentionPolicy',
@@ -99,12 +103,18 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       },
     }).addRetry(retryProps);
 
+    // LogStream複数で動くStateMachine (DescribeLogStreamsの戻り単位)
+    const stateMachineLogStreamFlow = new sfn.StateMachine(this, 'StateMachineLogStream', {
+      definition: this.createLogStreamFlowMap(),
+    });
+
     const logStreamsMap = new tasks.StepFunctionsStartExecution(this, 'LogStreamFlowMap', {
       stateMachine: stateMachineLogStreamFlow,
       integrationPattern: sfn.IntegrationPattern.RUN_JOB,
       resultPath: sfn.JsonPath.DISCARD,
     });
 
+    // LogStreamごとの処理結果は上位では使わないので、状態は空objectにしておく
     const logStreamMapLast = new sfn.Pass(this, 'LogStreamsMapLast', {
       result: sfn.Result.fromObject({}),
     });
@@ -130,6 +140,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
         'LogGroupName.$': '$.logGroup.LogGroupName',
       },
     }).addRetry(retryProps);
+
     return new sfn.Choice(this, 'JudgeLogGroup')
       .when(
         sfn.Condition.numberGreaterThanJsonPath('$.logGroup.CreationTime', '$.targetTime'),
@@ -161,6 +172,8 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
   }
 
   private createLogStreamFlow(): sfn.IChainable {
+    // 最後のログ登録から保持期間+1日以上経過しているLogStreamは削除する
+
     const getStreamTargetTime = new tasks.EvaluateExpression(this, 'GetStreamTargetTime', {
       expression: '$.eventTime - ($.retentionInDays + 1) * 24 * 60 * 60 * 1000',
       resultPath: '$.streamTargetTime',
