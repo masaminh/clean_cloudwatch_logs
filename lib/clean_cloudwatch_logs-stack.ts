@@ -1,8 +1,11 @@
-import * as cdk from '@aws-cdk/core';
-import * as sfn from '@aws-cdk/aws-stepfunctions';
-import * as tasks from '@aws-cdk/aws-stepfunctions-tasks';
-import * as events from '@aws-cdk/aws-events';
-import * as targets from '@aws-cdk/aws-events-targets';
+import * as cdk from 'aws-cdk-lib';
+import {
+  aws_stepfunctions as sfn,
+  aws_stepfunctions_tasks as tasks,
+  aws_events as events,
+  aws_events_targets as targets,
+} from 'aws-cdk-lib';
+import * as construct from 'constructs';
 
 const retryProps: sfn.RetryProps = {
   errors: ['CloudWatchLogs.CloudWatchLogsException', 'CloudWatchLogs.SdkClientException'],
@@ -13,7 +16,7 @@ const retryProps: sfn.RetryProps = {
 
 // eslint-disable-next-line import/prefer-default-export
 export class CleanCloudwatchLogsStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: construct.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     const getEventTime = new tasks.EvaluateExpression(this, 'GetEventTime', {
