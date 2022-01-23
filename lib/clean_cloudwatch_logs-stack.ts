@@ -4,6 +4,9 @@ import {
   aws_stepfunctions_tasks as tasks,
   aws_events as events,
   aws_events_targets as targets,
+  aws_lambda as lambda,
+  aws_lambda_nodejs as lambdaNodejs,
+  aws_iam as iam,
 } from 'aws-cdk-lib';
 import * as construct from 'constructs';
 
@@ -19,41 +22,115 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
   constructor(scope: construct.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const getEventTime = new tasks.EvaluateExpression(this, 'GetEventTime', {
-      expression: 'Date.parse($.time)',
-      resultPath: '$.eventTime',
+    const getLogGroupsLambda = new lambdaNodejs.NodejsFunction(this, 'get_log_groups', {
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.minutes(1),
+      tracing: lambda.Tracing.ACTIVE,
     });
 
-    const getTargetTime = new tasks.EvaluateExpression(this, 'GetTargetTime', {
-      expression: '$.eventTime - 7 * 24 * 60 * 60 * 1000',
-      resultPath: '$.targetTime',
+    getLogGroupsLambda.addToRolePolicy(new iam.PolicyStatement({
+      resources: ['arn:aws:logs:*:*:log-group:*:*'],
+      actions: ['logs:DescribeLogGroups'],
+    }));
+
+    const getLogGroups = new tasks.LambdaInvoke(this, 'GetLogGroups', {
+      lambdaFunction: getLogGroupsLambda,
+      inputPath: '$.time',
+      payloadResponseOnly: true,
     });
 
-    // 本来であれば１回でLogGroupを取り切れる保証はないが、
-    // 現在の運用では1回で取り切れるため、DescribeLogGroupsの繰り返しは行わない
-    const describeLogGroups = new tasks.CallAwsService(this, 'DescribeLogGroups', {
-      service: 'cloudwatchlogs',
-      action: 'describeLogGroups',
-      iamAction: 'logs:describeLogGroups',
-      iamResources: ['*'],
-      resultPath: '$.describeLogGroupOutput',
-    }).addRetry(retryProps);
+    const getLogStreamsLambda = new lambdaNodejs.NodejsFunction(this, 'get_log_streams', {
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.minutes(5),
+      tracing: lambda.Tracing.ACTIVE,
+    });
 
-    const logGroupMap = new sfn.Map(this, 'LogGroupMap', {
-      itemsPath: sfn.JsonPath.stringAt('$.describeLogGroupOutput.LogGroups'),
+    getLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
+      resources: ['arn:aws:logs:*:*:log-group:*:log-stream:*'],
+      actions: ['logs:DescribeLogStreams'],
+    }));
+
+    const getLogStreams = new tasks.LambdaInvoke(this, 'GetLogStreams', {
+      lambdaFunction: getLogStreamsLambda,
+      payloadResponseOnly: true,
+    });
+    const deleteLogStreamsLambda = new lambdaNodejs.NodejsFunction(this, 'delete_log_streams', {
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.minutes(15),
+      tracing: lambda.Tracing.ACTIVE,
+    });
+
+    deleteLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
+      resources: ['arn:aws:logs:*:*:log-group:*:log-stream:*'],
+      actions: ['logs:DeleteLogStream'],
+    }));
+
+    const deleteLogStreams = new tasks.LambdaInvoke(this, 'DeleteLogStreams', {
+      lambdaFunction: deleteLogStreamsLambda,
+      payloadResponseOnly: true,
+    });
+
+    const getLogStreamsMap = new sfn.Map(this, 'GetLogStreamsMap', {
+      itemsPath: sfn.JsonPath.stringAt('$.targetLogGroups'),
       parameters: {
-        'logGroup.$': '$$.Map.Item.Value',
-        'targetTime.$': '$.targetTime',
         'eventTime.$': '$.eventTime',
+        'logGroupInfo.$': '$$.Map.Item.Value',
       },
       maxConcurrency: 1,
-    }).iterator(this.createLogGroupFlow());
+      resultPath: sfn.JsonPath.DISCARD,
+    });
+
+    const setRetention = new tasks.CallAwsService(this, 'SetRetentionInDays', {
+      service: 'cloudwatchlogs',
+      action: 'putRetentionPolicy',
+      iamAction: 'logs:putRetentionPolicy',
+      iamResources: ['arn:aws:logs:*:*:log-group:*:*'],
+      resultPath: sfn.JsonPath.DISCARD,
+      parameters: {
+        'LogGroupName.$': '$.logGroupInfo.name',
+        RetentionInDays: 30,
+      },
+    }).addRetry(retryProps);
+
+    const setRetentionMap = new sfn.Map(this, 'SetRetentionMap', {
+      itemsPath: sfn.JsonPath.stringAt('$.noRetentionLogGroups'),
+      parameters: {
+        'logGroupInfo.$': '$$.Map.Item.Value',
+      },
+      maxConcurrency: 1,
+      resultPath: sfn.JsonPath.DISCARD,
+    });
+
+    const deleteLogGroups = new tasks.CallAwsService(this, 'DeleteLogGroup', {
+      service: 'cloudwatchlogs',
+      action: 'deleteLogGroup',
+      iamAction: 'logs:deleteLogGroup',
+      iamResources: ['arn:aws:logs:*:*:log-group:*:*'],
+      resultPath: sfn.JsonPath.DISCARD,
+      parameters: {
+        'LogGroupName.$': '$.logGroupInfo.name',
+      },
+    }).addRetry(retryProps);
+
+    const deleteLogGroupsMap = new sfn.Map(this, 'DeleteLogGroupMap', {
+      itemsPath: sfn.JsonPath.stringAt('$.emptyLogGroups'),
+      parameters: {
+        'logGroupInfo.$': '$$.Map.Item.Value',
+      },
+      maxConcurrency: 1,
+      resultPath: sfn.JsonPath.DISCARD,
+    });
+
+    const parallelLogGroups = new sfn.Parallel(this, 'ParallelLogGroups');
+
+    parallelLogGroups.branch(
+      getLogStreamsMap.iterator(getLogStreams.next(deleteLogStreams)),
+      setRetentionMap.iterator(setRetention),
+      deleteLogGroupsMap.iterator(deleteLogGroups),
+    );
 
     const stateMachine = new sfn.StateMachine(this, 'StateMachine', {
-      definition: getEventTime
-        .next(getTargetTime)
-        .next(describeLogGroups)
-        .next(logGroupMap),
+      definition: getLogGroups.next(parallelLogGroups),
     });
 
     // eslint-disable-next-line no-new
@@ -62,156 +139,5 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       targets: [new targets.SfnStateMachine(stateMachine)],
       enabled: true,
     });
-  }
-
-  private createLogGroupFlow(): sfn.IChainable {
-    // LogGroup単位で動作するフロー。
-    // ・LogGroupが作られてから7日たっていない場合は無操作
-    // ・LogGroupに保持期間設定がなされていない場合は30日に設定
-    // ・LogGroupにLogStreamがない場合、LogGroupを削除
-    // ・上記以外の場合、LogStreamの整理を行う
-
-    const setRetentionInDays = new tasks.CallAwsService(this, 'SetRetentionInDays', {
-      service: 'cloudwatchlogs',
-      action: 'putRetentionPolicy',
-      iamAction: 'logs:putRetentionPolicy',
-      iamResources: ['*'],
-      resultPath: sfn.JsonPath.DISCARD,
-      parameters: {
-        'LogGroupName.$': '$.logGroup.LogGroupName',
-        RetentionInDays: 30,
-      },
-    }).addRetry(retryProps);
-
-    const describeLogStreams = new tasks.CallAwsService(this, 'describeLogStreams', {
-      service: 'cloudwatchlogs',
-      action: 'describeLogStreams',
-      iamAction: 'logs:describeLogStreams',
-      iamResources: ['*'],
-      resultPath: '$.describeLogStreamsOutput',
-      parameters: {
-        'LogGroupName.$': '$.logGroup.LogGroupName',
-      },
-    }).addRetry(retryProps);
-
-    const describeLogStreamsMore = new tasks.CallAwsService(this, 'describeLogStreamsMore', {
-      service: 'cloudwatchlogs',
-      action: 'describeLogStreams',
-      iamAction: 'logs:describeLogStreams',
-      iamResources: ['*'],
-      resultPath: '$.describeLogStreamsOutput',
-      parameters: {
-        'LogGroupName.$': '$.logGroup.LogGroupName',
-        'NextToken.$': '$.describeLogStreamsOutput.NextToken',
-      },
-    }).addRetry(retryProps);
-
-    // LogStream複数で動くStateMachine (DescribeLogStreamsの戻り単位)
-    const stateMachineLogStreamFlow = new sfn.StateMachine(this, 'StateMachineLogStream', {
-      definition: this.createLogStreamFlowMap(),
-    });
-
-    const logStreamsMap = new tasks.StepFunctionsStartExecution(this, 'LogStreamFlowMap', {
-      stateMachine: stateMachineLogStreamFlow,
-      integrationPattern: sfn.IntegrationPattern.RUN_JOB,
-      resultPath: sfn.JsonPath.DISCARD,
-    });
-
-    // LogStreamごとの処理結果は上位では使わないので、状態は空objectにしておく
-    const logStreamMapLast = new sfn.Pass(this, 'LogStreamsMapLast', {
-      result: sfn.Result.fromObject({}),
-    });
-
-    const logStreamsMapLoop = describeLogStreams
-      .next(logStreamsMap)
-      .next(
-        new sfn.Choice(this, 'MoreLogStreams')
-          .when(
-            sfn.Condition.isPresent('$.describeLogStreamsOutput.NextToken'),
-            describeLogStreamsMore.next(logStreamsMap),
-          )
-          .otherwise(logStreamMapLast),
-      );
-
-    const deleteLogGroup = new tasks.CallAwsService(this, 'deleteLogGroup', {
-      service: 'cloudwatchlogs',
-      action: 'deleteLogGroup',
-      iamAction: 'logs:deleteLogGroup',
-      iamResources: ['*'],
-      resultPath: '$.deleteLogGroupOutput',
-      parameters: {
-        'LogGroupName.$': '$.logGroup.LogGroupName',
-      },
-    }).addRetry(retryProps);
-
-    return new sfn.Choice(this, 'JudgeLogGroup')
-      .when(
-        sfn.Condition.numberGreaterThanJsonPath('$.logGroup.CreationTime', '$.targetTime'),
-        logStreamMapLast,
-      )
-      .when(
-        sfn.Condition.isNotPresent('$.logGroup.RetentionInDays'),
-        setRetentionInDays.next(logStreamMapLast),
-      )
-      .when(
-        sfn.Condition.numberEquals('$.logGroup.StoredBytes', 0),
-        deleteLogGroup.next(logStreamMapLast),
-      )
-      .otherwise(logStreamsMapLoop);
-  }
-
-  private createLogStreamFlowMap(): sfn.IChainable {
-    return new sfn.Map(this, 'LogStreamsMap', {
-      itemsPath: sfn.JsonPath.stringAt('$.describeLogStreamsOutput.LogStreams'),
-      parameters: {
-        'logStream.$': '$$.Map.Item.Value',
-        'logGroupName.$': '$.logGroup.LogGroupName',
-        'eventTime.$': '$.eventTime',
-        'retentionInDays.$': '$.logGroup.RetentionInDays',
-      },
-      resultPath: '$.logStreamsMapOutput',
-      maxConcurrency: 1,
-    }).iterator(this.createLogStreamFlow());
-  }
-
-  private createLogStreamFlow(): sfn.IChainable {
-    // 最後のログ登録から保持期間+1日以上経過しているLogStreamは削除する
-
-    const getStreamTargetTime = new tasks.EvaluateExpression(this, 'GetStreamTargetTime', {
-      expression: '$.eventTime - ($.retentionInDays + 1) * 24 * 60 * 60 * 1000',
-      resultPath: '$.streamTargetTime',
-    });
-
-    const deleteLogStream = new tasks.CallAwsService(this, 'deleteLogStream', {
-      service: 'cloudwatchlogs',
-      action: 'deleteLogStream',
-      iamAction: 'logs:deleteLogStream',
-      iamResources: ['*'],
-      resultPath: '$.deleteLogStreamOutput',
-      parameters: {
-        'LogGroupName.$': '$.logGroupName',
-        'LogStreamName.$': '$.logStream.LogStreamName',
-      },
-    }).addRetry(retryProps);
-
-    const logStreamFlowLast = new sfn.Pass(this, 'LogStreamFlowLast', {
-      result: sfn.Result.fromObject({}),
-    });
-
-    return getStreamTargetTime
-      .next(
-        new sfn.Choice(this, 'JudgeNeedDeleteLogStream')
-          .when(
-            sfn.Condition.or(
-              sfn.Condition.and(
-                sfn.Condition.isNotPresent('$.logStream.LastIngestionTime'),
-                sfn.Condition.numberLessThanJsonPath('$.logStream.CreationTime', '$.streamTargetTime'),
-              ),
-              sfn.Condition.numberLessThanJsonPath('$.logStream.LastIngestionTime', '$.streamTargetTime'),
-            ),
-            deleteLogStream.next(logStreamFlowLast),
-          )
-          .otherwise(logStreamFlowLast),
-      );
   }
 }
