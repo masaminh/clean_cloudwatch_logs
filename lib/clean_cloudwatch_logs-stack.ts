@@ -101,32 +101,11 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       resultPath: sfn.JsonPath.DISCARD,
     });
 
-    const deleteLogGroups = new tasks.CallAwsService(this, 'DeleteLogGroup', {
-      service: 'cloudwatchlogs',
-      action: 'deleteLogGroup',
-      iamAction: 'logs:deleteLogGroup',
-      iamResources: ['arn:aws:logs:*:*:log-group:*:*'],
-      resultPath: sfn.JsonPath.DISCARD,
-      parameters: {
-        'LogGroupName.$': '$.logGroupInfo.name',
-      },
-    }).addRetry(retryProps);
-
-    const deleteLogGroupsMap = new sfn.Map(this, 'DeleteLogGroupMap', {
-      itemsPath: sfn.JsonPath.stringAt('$.emptyLogGroups'),
-      parameters: {
-        'logGroupInfo.$': '$$.Map.Item.Value',
-      },
-      maxConcurrency: 1,
-      resultPath: sfn.JsonPath.DISCARD,
-    });
-
     const parallelLogGroups = new sfn.Parallel(this, 'ParallelLogGroups');
 
     parallelLogGroups.branch(
       getLogStreamsMap.iterator(getLogStreams.next(deleteLogStreams)),
       setRetentionMap.iterator(setRetention),
-      deleteLogGroupsMap.iterator(deleteLogGroups),
     );
 
     const stateMachine = new sfn.StateMachine(this, 'StateMachine', {
