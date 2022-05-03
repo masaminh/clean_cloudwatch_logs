@@ -9,7 +9,7 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "deploy": "cdk deploy --all",
+    "deploy": "cdk deploy --all --require-approval never",
     "deploy:jp": "cdk deploy CleanCloudwatchLogsStack-ap-northeast-1"
   },
   "devDependencies": {
