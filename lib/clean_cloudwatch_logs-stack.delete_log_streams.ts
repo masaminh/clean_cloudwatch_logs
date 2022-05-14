@@ -3,6 +3,7 @@ import {
   CloudWatchLogsClient, DeleteLogStreamCommand,
 } from '@aws-sdk/client-cloudwatch-logs';
 import { LogStreamInfoType, isLogStreamInfoType } from './common_types';
+import { isObject, isString } from './type_utils';
 
 type InputType = {
   logGroupName: string,
@@ -17,17 +18,17 @@ const client = AWSXRay.captureAWSv3Client(
   }),
 );
 
-function isInputType(arg: any): arg is InputType {
+function isInputType(arg: unknown): arg is InputType {
   return (
-    arg != null
-    && typeof arg.logGroupName === 'string'
+    isObject<InputType>(arg)
+    && isString(arg.logGroupName)
     && Array.isArray(arg.targetLogStreams)
     && arg.targetLogStreams.every(isLogStreamInfoType)
   );
 }
 
 // eslint-disable-next-line import/prefer-default-export
-export async function handler(input: any): Promise<OutputType> {
+export async function handler(input: unknown): Promise<OutputType> {
   const startTime = Date.now();
 
   if (!isInputType(input)) {

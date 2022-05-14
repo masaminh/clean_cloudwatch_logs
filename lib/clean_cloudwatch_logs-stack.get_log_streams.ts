@@ -1,6 +1,7 @@
 import * as AWSXRay from 'aws-xray-sdk';
 import { CloudWatchLogsClient, paginateDescribeLogStreams } from '@aws-sdk/client-cloudwatch-logs';
 import { LogStreamInfoType, isLogGroupInfoType, LogGroupInfoType } from './common_types';
+import { isObject, isNumber } from './type_utils';
 
 type InputType = {
   eventTime: number;
@@ -18,16 +19,16 @@ const client = AWSXRay.captureAWSv3Client(
   }),
 );
 
-function isInputType(arg: any): arg is InputType {
+function isInputType(arg: unknown): arg is InputType {
   return (
-    arg != null
-    && typeof arg.eventTime === 'number'
+    isObject<InputType>(arg)
+    && isNumber(arg.eventTime)
     && isLogGroupInfoType(arg.logGroupInfo)
   );
 }
 
 // eslint-disable-next-line import/prefer-default-export
-export async function handler(input: any): Promise<OutputType> {
+export async function handler(input: unknown): Promise<OutputType> {
   if (!isInputType(input)) {
     return {
       logGroupName: '',
