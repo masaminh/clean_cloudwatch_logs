@@ -1,5 +1,6 @@
 import { CloudWatchLogsClient, paginateDescribeLogGroups } from '@aws-sdk/client-cloudwatch-logs';
 import { LogGroupInfoType } from './common_types';
+import { isString } from './type_utils';
 
 type OutputType = {
   eventTime: number,
@@ -11,8 +12,8 @@ type OutputType = {
 const client = new CloudWatchLogsClient({ maxAttempts: 5 });
 
 // eslint-disable-next-line import/prefer-default-export
-export async function handler(time: any): Promise<OutputType> {
-  if (typeof time !== 'string') {
+export async function handler(time: unknown): Promise<OutputType> {
+  if (!isString(time)) {
     return {
       eventTime: 0,
       targetLogGroups: [],
