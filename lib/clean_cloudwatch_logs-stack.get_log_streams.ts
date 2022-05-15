@@ -11,6 +11,7 @@ type InputType = {
 type OutputType = {
   logGroupName: string,
   targetLogStreams: LogStreamInfoType[];
+  isEmpty: boolean;
 }
 
 const client = AWSXRay.captureAWSv3Client(
@@ -33,6 +34,7 @@ export async function handler(input: unknown): Promise<OutputType> {
     return {
       logGroupName: '',
       targetLogStreams: [],
+      isEmpty: false,
     };
   }
 
@@ -45,15 +47,21 @@ export async function handler(input: unknown): Promise<OutputType> {
     return {
       logGroupName: '',
       targetLogStreams: [],
+      isEmpty: false,
     };
   }
 
   const targetLogStreams: LogStreamInfoType[] = [];
+  let isEmpty = true;
 
   // eslint-disable-next-line no-restricted-syntax
   for await (const page of paginateDescribeLogStreams({ client }, {
     logGroupName,
   })) {
+    if (page.logStreams != null && page.logStreams.length > 0) {
+      isEmpty = false;
+    }
+
     page.logStreams?.forEach((logStream) => {
       if (logStream.logStreamName == null) {
         return;
@@ -78,5 +86,6 @@ export async function handler(input: unknown): Promise<OutputType> {
   return {
     logGroupName,
     targetLogStreams,
+    isEmpty,
   };
 }
