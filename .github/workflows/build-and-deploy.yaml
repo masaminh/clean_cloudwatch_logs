@@ -28,4 +28,4 @@ jobs:
           role-session-name: CleanCloudwatchLogs
       - name: deploy
         if: startsWith(github.ref, 'refs/heads/main')
-        run: npm run deploy
+        run: npm run deploy -- -c queue_arn=${{ secrets.QUEUE_ARN }}

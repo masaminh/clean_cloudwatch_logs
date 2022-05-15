@@ -6,7 +6,6 @@ type OutputType = {
   eventTime: number,
   targetLogGroups: LogGroupInfoType[],
   noRetentionLogGroups: LogGroupInfoType[],
-  emptyLogGroups: LogGroupInfoType[],
 }
 
 const client = new CloudWatchLogsClient({ maxAttempts: 5 });
@@ -18,7 +17,6 @@ export async function handler(time: unknown): Promise<OutputType> {
       eventTime: 0,
       targetLogGroups: [],
       noRetentionLogGroups: [],
-      emptyLogGroups: [],
     };
   }
 
@@ -26,7 +24,6 @@ export async function handler(time: unknown): Promise<OutputType> {
   const thresholdTimeEpoch = eventTime - 7 * 24 * 60 * 60 * 1000;
   const targetLogGroups: LogGroupInfoType[] = [];
   const noRetentionLogGroups: LogGroupInfoType[] = [];
-  const emptyLogGroups: LogGroupInfoType[] = [];
 
   // eslint-disable-next-line no-restricted-syntax
   for await (const page of paginateDescribeLogGroups({ client }, {})) {
@@ -48,8 +45,6 @@ export async function handler(time: unknown): Promise<OutputType> {
 
       if (logGroup.retentionInDays == null) {
         logGroups = noRetentionLogGroups;
-      } else if (logGroup.storedBytes === 0) {
-        logGroups = emptyLogGroups;
       } else {
         logGroups = targetLogGroups;
       }
@@ -62,6 +57,5 @@ export async function handler(time: unknown): Promise<OutputType> {
     eventTime,
     targetLogGroups,
     noRetentionLogGroups,
-    emptyLogGroups,
   };
 }

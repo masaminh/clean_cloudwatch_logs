@@ -7,6 +7,7 @@ import {
   aws_lambda as lambda,
   aws_lambda_nodejs as lambdaNodejs,
   aws_iam as iam,
+  aws_sqs as sqs,
 } from 'aws-cdk-lib';
 import * as construct from 'constructs';
 
@@ -17,9 +18,13 @@ const retryProps: sfn.RetryProps = {
   backoffRate: 2,
 };
 
+interface StackProps extends cdk.StackProps {
+  queueArn: string;
+}
+
 // eslint-disable-next-line import/prefer-default-export
 export class CleanCloudwatchLogsStack extends cdk.Stack {
-  constructor(scope: construct.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: construct.Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
     const getLogGroupsLambda = new lambdaNodejs.NodejsFunction(this, 'get_log_groups', {
@@ -70,6 +75,20 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       payloadResponseOnly: true,
     });
 
+    const notifyMessage = new tasks.EvaluateExpression(this, 'NotifyMessage', {
+      // eslint-disable-next-line no-template-curly-in-string
+      expression: '`Loggroup: ${$.logGroupName} is empty.`',
+      resultPath: '$.notifyMessage',
+    });
+
+    const notifyEmptyLogGroup = new tasks.SqsSendMessage(this, 'NotifyEmptyLogGroup', {
+      queue: sqs.Queue.fromQueueArn(this, 'NotifyQueue', props.queueArn),
+      messageBody: sfn.TaskInput.fromObject({
+        webhookname: 'Develop',
+        message: sfn.JsonPath.stringAt('$.notifyMessage'),
+      }),
+    });
+
     const getLogStreamsMap = new sfn.Map(this, 'GetLogStreamsMap', {
       itemsPath: sfn.JsonPath.stringAt('$.targetLogGroups'),
       parameters: {
@@ -104,7 +123,14 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     const parallelLogGroups = new sfn.Parallel(this, 'ParallelLogGroups');
 
     parallelLogGroups.branch(
-      getLogStreamsMap.iterator(getLogStreams.next(deleteLogStreams)),
+      getLogStreamsMap.iterator(getLogStreams.next(
+        new sfn.Choice(this, 'IsEmptyLogGroup')
+          .when(
+            sfn.Condition.booleanEquals('$.isEmpty', true),
+            notifyMessage.next(notifyEmptyLogGroup),
+          )
+          .otherwise(deleteLogStreams),
+      )),
       setRetentionMap.iterator(setRetention),
     );
 
