@@ -21,7 +21,7 @@ jobs:
         run: npm ci
       - name: Configure AWS Credentials
         if: startsWith(github.ref, 'refs/heads/main')
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ap-northeast-1
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
