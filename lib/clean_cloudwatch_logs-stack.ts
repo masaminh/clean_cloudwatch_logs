@@ -138,7 +138,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     );
 
     const stateMachine = new sfn.StateMachine(this, 'StateMachine', {
-      definition: getLogGroups.next(parallelLogGroups),
+      definitionBody: sfn.DefinitionBody.fromChainable(getLogGroups.next(parallelLogGroups)),
     });
 
     // eslint-disable-next-line no-new
