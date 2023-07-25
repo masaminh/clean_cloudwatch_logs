@@ -32,7 +32,7 @@
     "@aws-sdk/client-cloudwatch-logs": "^3.363.0",
     "@types/aws-lambda": "^8.10.89",
     "aws-cdk-lib": "^2.86.0",
-    "aws-xray-sdk": "^3.3.4",
+    "aws-xray-sdk": "^3.5.1",
     "constructs": "^10.2.65",
     "source-map-support": "^0.5.21"
   }
