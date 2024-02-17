@@ -13,27 +13,27 @@
     "deploy:jp": "cdk deploy CleanCloudwatchLogsStack-ap-northeast-1"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.1",
-    "@types/node": "18.16.3",
-    "@typescript-eslint/eslint-plugin": "^5.9.1",
-    "@typescript-eslint/parser": "^5.9.1",
-    "aws-cdk": "^2.86.0",
-    "esbuild": "^0.14.11",
-    "eslint": "^8.6.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "20.11.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "aws-cdk": "^2.128.0",
+    "esbuild": "^0.20.0",
+    "eslint": "^8.56.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-import-resolver-typescript": "^2.5.0",
-    "eslint-plugin-import": "^2.25.4",
-    "jest": "^29.5.0",
-    "ts-jest": "^29.1.0",
-    "ts-node": "^10.9.1",
-    "typescript": "~5.0.4"
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.3.3"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch-logs": "^3.363.0",
-    "@types/aws-lambda": "^8.10.89",
-    "aws-cdk-lib": "^2.86.0",
-    "aws-xray-sdk": "^3.5.1",
-    "constructs": "^10.2.65",
+    "@aws-sdk/client-cloudwatch-logs": "^3.515.0",
+    "@types/aws-lambda": "^8.10.133",
+    "aws-cdk-lib": "^2.128.0",
+    "aws-xray-sdk": "^3.5.3",
+    "constructs": "^10.3.0",
     "source-map-support": "^0.5.21"
   }
 }
