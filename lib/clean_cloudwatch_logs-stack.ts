@@ -94,7 +94,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
 
     const getLogStreamsMap = new sfn.Map(this, 'GetLogStreamsMap', {
       itemsPath: sfn.JsonPath.stringAt('$.targetLogGroups'),
-      parameters: {
+      itemSelector: {
         'eventTime.$': '$.eventTime',
         'logGroupInfo.$': '$$.Map.Item.Value',
       },
@@ -116,7 +116,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
 
     const setRetentionMap = new sfn.Map(this, 'SetRetentionMap', {
       itemsPath: sfn.JsonPath.stringAt('$.noRetentionLogGroups'),
-      parameters: {
+      itemSelector: {
         'logGroupInfo.$': '$$.Map.Item.Value',
       },
       maxConcurrency: 1,
@@ -126,7 +126,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     const parallelLogGroups = new sfn.Parallel(this, 'ParallelLogGroups');
 
     parallelLogGroups.branch(
-      getLogStreamsMap.iterator(getLogStreams.next(
+      getLogStreamsMap.itemProcessor(getLogStreams.next(
         new sfn.Choice(this, 'IsEmptyLogGroup')
           .when(
             sfn.Condition.booleanEquals('$.isEmpty', true),
@@ -134,7 +134,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
           )
           .otherwise(deleteLogStreams),
       )),
-      setRetentionMap.iterator(setRetention),
+      setRetentionMap.itemProcessor(setRetention),
     );
 
     const stateMachine = new sfn.StateMachine(this, 'StateMachine', {
