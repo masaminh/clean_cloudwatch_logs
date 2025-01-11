@@ -41,6 +41,7 @@ export async function handler(time: unknown): Promise<OutputType> {
       const logGroupInfo: LogGroupInfoType = {
         name: logGroup.logGroupName,
         retentionInDays: logGroup.retentionInDays,
+        region: logGroup.arn?.split(':')[3] ?? '-',
       };
 
       if (logGroup.retentionInDays == null) {

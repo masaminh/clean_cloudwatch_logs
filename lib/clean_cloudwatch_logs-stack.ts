@@ -80,7 +80,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
 
     const notifyMessage = new tasks.EvaluateExpression(this, 'NotifyMessage', {
       // eslint-disable-next-line no-template-curly-in-string
-      expression: '`Loggroup: ${$.logGroupName} is empty.`',
+      expression: '`Region: ${$.region}, Loggroup: ${$.logGroupName} is empty.`',
       resultPath: '$.notifyMessage',
     });
 
