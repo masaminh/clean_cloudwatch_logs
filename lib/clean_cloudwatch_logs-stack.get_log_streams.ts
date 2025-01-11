@@ -12,6 +12,7 @@ type OutputType = {
   logGroupName: string,
   targetLogStreams: LogStreamInfoType[];
   isEmpty: boolean;
+  region: string;
 }
 
 const client = AWSXRay.captureAWSv3Client(
@@ -35,6 +36,7 @@ export async function handler(input: unknown): Promise<OutputType> {
       logGroupName: '',
       targetLogStreams: [],
       isEmpty: false,
+      region: '-',
     };
   }
 
@@ -48,6 +50,7 @@ export async function handler(input: unknown): Promise<OutputType> {
       logGroupName: '',
       targetLogStreams: [],
       isEmpty: false,
+      region: '-',
     };
   }
 
@@ -87,5 +90,6 @@ export async function handler(input: unknown): Promise<OutputType> {
     logGroupName,
     targetLogStreams,
     isEmpty,
+    region: input.logGroupInfo.region,
   };
 }

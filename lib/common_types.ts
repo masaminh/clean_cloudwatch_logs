@@ -3,13 +3,16 @@ import { isObject, isString, isNumber } from './type_utils';
 export type LogGroupInfoType = {
   name: string;
   retentionInDays?: number;
+  region: string;
 }
 
 export function isLogGroupInfoType(arg: unknown): arg is LogGroupInfoType {
   return (
     isObject<LogGroupInfoType>(arg)
     && isString(arg.name)
-    && (arg.retentionInDays == null || isNumber(arg.retentionInDays)));
+    && (arg.retentionInDays == null || isNumber(arg.retentionInDays))
+    && isString(arg.region)
+  );
 }
 
 export type LogStreamInfoType = {
