@@ -9,6 +9,7 @@ parserOptions:
   sourceType: module
 plugins:
   - '@typescript-eslint'
+  - vitest
 settings:
   import/resolver:
     typescript:
