@@ -17,5 +17,6 @@
     ]
   },
   "context": {
+    "@aws-cdk/aws-iam:oidcRejectUnauthorizedConnections": true
   }
 }
