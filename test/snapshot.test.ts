@@ -1,12 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
-import * as fs from 'node:fs';
 import { Template } from 'aws-cdk-lib/assertions';
 import { CleanCloudwatchLogsStack } from '../lib/clean_cloudwatch_logs-stack';
 
+export const ignoreAssetHashSerializer = {
+  test: (val: unknown) => typeof val === 'string',
+  serialize: (val: string) => {
+    return `"${val.replace(/([A-Fa-f0-9]{64}.zip)/, 'HASH-REPLACED.zip')}"`;
+  },
+};
+
 test('snapshot test', () => {
-  const context = JSON.parse(fs.readFileSync('cdk.context.json', {encoding: 'utf8'}));
-  const app = new cdk.App({context});
-  const queueArn = app.node.tryGetContext('queue_arn');
+  const app = new cdk.App();
+  const queueArn = 'arn:aws:sqs:ap-northeast-1:123456789012:Queue';
   console.log(queueArn);
 
   const stack = new CleanCloudwatchLogsStack(app, 'MyTestStack',  {
@@ -14,6 +19,8 @@ test('snapshot test', () => {
   });
   // スタックからテンプレート(JSON)を生成
   const template = Template.fromStack(stack).toJSON();
+
+  expect.addSnapshotSerializer(ignoreAssetHashSerializer);
 
   // 生成したテンプレートとスナップショットが同じか検証
   expect(template).toMatchSnapshot();
