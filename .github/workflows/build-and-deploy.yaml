@@ -19,6 +19,8 @@ jobs:
           node-version: 20
       - name: Install Dependencies
         run: npm ci
+      - name: Unit Test
+        run: npm t
       - name: Configure AWS Credentials
         if: startsWith(github.ref, 'refs/heads/main')
         uses: aws-actions/configure-aws-credentials@v2
