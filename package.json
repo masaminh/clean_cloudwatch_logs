@@ -16,7 +16,7 @@
     "@types/node": "20.11.19",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
-    "aws-cdk": "^2.177.0",
+    "aws-cdk": "^2.178.2",
     "esbuild": "^0.25.0",
     "eslint": "^8.56.0",
     "eslint-config-airbnb-base": "^15.0.0",
