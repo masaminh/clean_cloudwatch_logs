@@ -15,10 +15,10 @@
     "deploy:jp": "cdk deploy CleanCloudwatchLogsStack-ap-northeast-1"
   },
   "devDependencies": {
-    "@types/node": "20.11.19",
+    "@types/node": "^22",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
-    "aws-cdk": "^2.1006.0",
+    "aws-cdk": "^2.1033.0",
     "esbuild": "^0.25.0",
     "eslint": "^8.56.0",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -31,9 +31,9 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.515.0",
     "@types/aws-lambda": "^8.10.133",
-    "aws-cdk-lib": "^2.189.1",
+    "aws-cdk-lib": "^2.227.0",
     "aws-xray-sdk": "^3.5.3",
-    "constructs": "^10.4.2",
+    "constructs": "^10.4.3",
     "source-map-support": "^0.5.21"
   }
 }

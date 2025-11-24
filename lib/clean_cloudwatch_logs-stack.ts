@@ -31,7 +31,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.minutes(1),
       tracing: lambda.Tracing.ACTIVE,
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
     });
 
     getLogGroupsLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -49,7 +49,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.minutes(5),
       tracing: lambda.Tracing.ACTIVE,
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
     });
 
     getLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -65,7 +65,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.minutes(15),
       tracing: lambda.Tracing.ACTIVE,
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
     });
 
     deleteLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
