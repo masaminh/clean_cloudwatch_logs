@@ -1,7 +1,7 @@
-import * as AWSXRay from 'aws-xray-sdk';
-import { CloudWatchLogsClient, paginateDescribeLogStreams } from '@aws-sdk/client-cloudwatch-logs';
-import { LogStreamInfoType, isLogGroupInfoType, LogGroupInfoType } from './common_types';
-import { isObject, isNumber } from './type_utils';
+import * as AWSXRay from 'aws-xray-sdk'
+import { CloudWatchLogsClient, paginateDescribeLogStreams } from '@aws-sdk/client-cloudwatch-logs'
+import { LogStreamInfoType, isLogGroupInfoType, LogGroupInfoType } from './common_types'
+import { isObject, isNumber } from './type_utils'
 
 type InputType = {
   eventTime: number;
@@ -18,32 +18,31 @@ type OutputType = {
 const client = AWSXRay.captureAWSv3Client(
   new CloudWatchLogsClient({
     maxAttempts: 10,
-  }),
-);
+  })
+)
 
-function isInputType(arg: unknown): arg is InputType {
+function isInputType (arg: unknown): arg is InputType {
   return (
-    isObject<InputType>(arg)
-    && isNumber(arg.eventTime)
-    && isLogGroupInfoType(arg.logGroupInfo)
-  );
+    isObject<InputType>(arg) &&
+    isNumber(arg.eventTime) &&
+    isLogGroupInfoType(arg.logGroupInfo)
+  )
 }
 
-// eslint-disable-next-line import/prefer-default-export
-export async function handler(input: unknown): Promise<OutputType> {
+export async function handler (input: unknown): Promise<OutputType> {
   if (!isInputType(input)) {
     return {
       logGroupName: '',
       targetLogStreams: [],
       isEmpty: false,
       region: '-',
-    };
+    }
   }
 
-  const { logGroupInfo } = input;
+  const { logGroupInfo } = input
 
-  const logGroupName = logGroupInfo.name;
-  const { retentionInDays } = logGroupInfo;
+  const logGroupName = logGroupInfo.name
+  const { retentionInDays } = logGroupInfo
 
   if (retentionInDays == null) {
     return {
@@ -51,39 +50,38 @@ export async function handler(input: unknown): Promise<OutputType> {
       targetLogStreams: [],
       isEmpty: false,
       region: '-',
-    };
+    }
   }
 
-  const targetLogStreams: LogStreamInfoType[] = [];
-  let isEmpty = true;
+  const targetLogStreams: LogStreamInfoType[] = []
+  let isEmpty = true
 
-  // eslint-disable-next-line no-restricted-syntax
   for await (const page of paginateDescribeLogStreams({ client }, {
     logGroupName,
   })) {
     if (page.logStreams != null && page.logStreams.length > 0) {
-      isEmpty = false;
+      isEmpty = false
     }
 
     page.logStreams?.forEach((logStream) => {
       if (logStream.logStreamName == null) {
-        return;
+        return
       }
 
       if (logStream.lastIngestionTime == null) {
-        return;
+        return
       }
 
-      const threshold = input.eventTime - retentionInDays * 24 * 60 * 60 * 1000;
+      const threshold = input.eventTime - retentionInDays * 24 * 60 * 60 * 1000
 
       if (logStream.lastIngestionTime > threshold) {
-        return;
+        return
       }
 
       targetLogStreams.push({
         name: logStream.logStreamName,
-      });
-    });
+      })
+    })
   }
 
   return {
@@ -91,5 +89,5 @@ export async function handler(input: unknown): Promise<OutputType> {
     targetLogStreams,
     isEmpty,
     region: input.logGroupInfo.region,
-  };
+  }
 }

@@ -2,5 +2,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "yaml.schemaStore.enable": false
+  "yaml.schemaStore.enable": false,
+  "eslint.useFlatConfig": true
 }
