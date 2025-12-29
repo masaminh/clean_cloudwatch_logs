@@ -63,26 +63,95 @@ exports[`snapshot test 1`] = `
       },
       "Type": "AWS::IAM::Role",
     },
-    "Rule4C995B7F": {
+    "Schedule83A77FD1": {
       "Properties": {
+        "FlexibleTimeWindow": {
+          "MaximumWindowInMinutes": 60,
+          "Mode": "FLEXIBLE",
+        },
         "ScheduleExpression": "rate(1 day)",
+        "ScheduleExpressionTimezone": "Etc/UTC",
         "State": "ENABLED",
-        "Targets": [
+        "Target": {
+          "Arn": {
+            "Ref": "StateMachine2E01A3A5",
+          },
+          "RetryPolicy": {
+            "MaximumEventAgeInSeconds": 86400,
+            "MaximumRetryAttempts": 185,
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRoleForTarget6258ef6CC3E773",
+              "Arn",
+            ],
+          },
+        },
+      },
+      "Type": "AWS::Scheduler::Schedule",
+    },
+    "SchedulerRoleForTarget6258ef6CC3E773": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId",
+                  },
+                  "aws:SourceArn": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":scheduler:ap-northeast-1:",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":schedule-group/default",
+                      ],
+                    ],
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "scheduler.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "SchedulerRoleForTarget6258efDefaultPolicy964C27D6": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "StateMachine2E01A3A5",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "SchedulerRoleForTarget6258efDefaultPolicy964C27D6",
+        "Roles": [
           {
-            "Arn": {
-              "Ref": "StateMachine2E01A3A5",
-            },
-            "Id": "Target0",
-            "RoleArn": {
-              "Fn::GetAtt": [
-                "StateMachineEventsRoleDBCDECD1",
-                "Arn",
-              ],
-            },
+            "Ref": "SchedulerRoleForTarget6258ef6CC3E773",
           },
         ],
       },
-      "Type": "AWS::Events::Rule",
+      "Type": "AWS::IAM::Policy",
     },
     "StateMachine2E01A3A5": {
       "DeletionPolicy": "Delete",
@@ -148,46 +217,6 @@ exports[`snapshot test 1`] = `
       },
       "Type": "AWS::StepFunctions::StateMachine",
       "UpdateReplacePolicy": "Delete",
-    },
-    "StateMachineEventsRoleDBCDECD1": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "events.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "StateMachineEventsRoleDefaultPolicyFB602CA9": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": "states:StartExecution",
-              "Effect": "Allow",
-              "Resource": {
-                "Ref": "StateMachine2E01A3A5",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "StateMachineEventsRoleDefaultPolicyFB602CA9",
-        "Roles": [
-          {
-            "Ref": "StateMachineEventsRoleDBCDECD1",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
     },
     "StateMachineRoleB840431D": {
       "Properties": {
