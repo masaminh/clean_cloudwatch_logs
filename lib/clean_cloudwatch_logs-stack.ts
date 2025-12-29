@@ -2,8 +2,8 @@ import * as cdk from 'aws-cdk-lib'
 import {
   aws_stepfunctions as sfn,
   aws_stepfunctions_tasks as tasks,
-  aws_events as events,
-  aws_events_targets as targets,
+  aws_scheduler as scheduler,
+  aws_scheduler_targets as targets,
   aws_lambda as lambda,
   aws_lambda_nodejs as lambdaNodejs,
   aws_iam as iam,
@@ -141,10 +141,10 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     })
 
     // eslint-disable-next-line no-new
-    new events.Rule(this, 'Rule', {
-      schedule: events.Schedule.rate(cdk.Duration.days(1)),
-      targets: [new targets.SfnStateMachine(stateMachine)],
-      enabled: true,
+    new scheduler.Schedule(this, 'Schedule', {
+      schedule: scheduler.ScheduleExpression.rate(cdk.Duration.days(1)),
+      target: new targets.StepFunctionsStartExecution(stateMachine, {}),
+      timeWindow: scheduler.TimeWindow.flexible(cdk.Duration.hours(1)),
     })
   }
 }
