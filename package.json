@@ -27,7 +27,7 @@
     "vitest": "^3.0.5"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch-logs": "^3.968.0",
+    "@aws-sdk/client-cloudwatch-logs": "^3.986.0",
     "@types/aws-lambda": "^8.10.133",
     "aws-cdk-lib": "^2.227.0",
     "aws-xray-sdk": "^3.5.3",
