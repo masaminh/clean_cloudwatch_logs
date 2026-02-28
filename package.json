@@ -29,7 +29,7 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.986.0",
     "@types/aws-lambda": "^8.10.133",
-    "aws-cdk-lib": "^2.227.0",
+    "aws-cdk-lib": "^2.240.0",
     "aws-xray-sdk": "^3.5.3",
     "constructs": "^10.4.3",
     "source-map-support": "^0.5.21"
