@@ -17,7 +17,7 @@
   "devDependencies": {
     "@tsconfig/node22": "^22.0.5",
     "@types/node": "^22",
-    "aws-cdk": "^2.1033.0",
+    "aws-cdk": "^2.1107.0",
     "esbuild": "^0.25.0",
     "eslint": "^9",
     "eslint-config-flat-gitignore": "^2.1.0",
