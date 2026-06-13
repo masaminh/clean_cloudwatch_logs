@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { Match, Template } from 'aws-cdk-lib/assertions'
-import { CleanCloudwatchLogsStack } from '../lib/clean_cloudwatch_logs-stack'
+import { CleanCloudwatchLogsStack, lambdaFunctionNames } from '../lib/clean_cloudwatch_logs-stack'
 
 export const ignoreAssetHashSerializer = {
   test: (val: unknown) => typeof val === 'string',
@@ -30,6 +30,18 @@ test('snapshot test', () => {
       Tags: Match.arrayWith([tag]),
     })
   }
+
+  template.resourceCountIs('AWS::Logs::LogGroup', 4)
+  for (const functionName of Object.values(lambdaFunctionNames)) {
+    template.hasResourceProperties('AWS::Logs::LogGroup', {
+      LogGroupName: `/aws/lambda/${functionName}`,
+      RetentionInDays: 30,
+    })
+  }
+  template.allResources('AWS::Logs::LogGroup', {
+    DeletionPolicy: 'Delete',
+    UpdateReplacePolicy: 'Delete',
+  })
 
   expect.addSnapshotSerializer(ignoreAssetHashSerializer)
 

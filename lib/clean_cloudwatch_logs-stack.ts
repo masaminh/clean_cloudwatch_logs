@@ -7,6 +7,7 @@ import {
   aws_lambda as lambda,
   aws_lambda_nodejs as lambdaNodejs,
   aws_iam as iam,
+  aws_logs as logs,
   aws_sqs as sqs,
 } from 'aws-cdk-lib'
 import * as construct from 'constructs'
@@ -22,6 +23,25 @@ interface StackProps extends cdk.StackProps {
   queueArn: string;
 }
 
+export const lambdaFunctionNames = {
+  getLogGroups: 'get_log_groups',
+  getLogStreams: 'get_log_streams',
+  deleteLogStreams: 'delete_log_streams',
+  buildNotifyMessage: 'build_notify_message',
+} as const
+
+function createLambdaLogGroup (
+  scope: construct.Construct,
+  id: string,
+  functionName: string
+): logs.LogGroup {
+  return new logs.LogGroup(scope, id, {
+    logGroupName: `/aws/lambda/${functionName}`,
+    retention: logs.RetentionDays.ONE_MONTH,
+    removalPolicy: cdk.RemovalPolicy.DESTROY,
+  })
+}
+
 export class CleanCloudwatchLogsStack extends cdk.Stack {
   constructor (scope: construct.Construct, id: string, props: StackProps) {
     super(scope, id, props)
@@ -35,6 +55,8 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(1),
       tracing: lambda.Tracing.ACTIVE,
       runtime: lambda.Runtime.NODEJS_22_X,
+      functionName: lambdaFunctionNames.getLogGroups,
+      logGroup: createLambdaLogGroup(this, 'GetLogGroupsLogGroup', lambdaFunctionNames.getLogGroups),
     })
 
     getLogGroupsLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -53,6 +75,8 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(5),
       tracing: lambda.Tracing.ACTIVE,
       runtime: lambda.Runtime.NODEJS_22_X,
+      functionName: lambdaFunctionNames.getLogStreams,
+      logGroup: createLambdaLogGroup(this, 'GetLogStreamsLogGroup', lambdaFunctionNames.getLogStreams),
     })
 
     getLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -69,6 +93,8 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       timeout: cdk.Duration.minutes(15),
       tracing: lambda.Tracing.ACTIVE,
       runtime: lambda.Runtime.NODEJS_22_X,
+      functionName: lambdaFunctionNames.deleteLogStreams,
+      logGroup: createLambdaLogGroup(this, 'DeleteLogStreamsLogGroup', lambdaFunctionNames.deleteLogStreams),
     })
 
     deleteLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -86,6 +112,8 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       tracing: lambda.Tracing.ACTIVE,
       runtime: lambda.Runtime.NODEJS_22_X,
+      functionName: lambdaFunctionNames.buildNotifyMessage,
+      logGroup: createLambdaLogGroup(this, 'BuildNotifyMessageLogGroup', lambdaFunctionNames.buildNotifyMessage),
     })
 
     const buildNotifyMessage = new tasks.LambdaInvoke(this, 'BuildNotifyMessage', {

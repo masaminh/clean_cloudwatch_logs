@@ -10,6 +10,98 @@ exports[`snapshot test 1`] = `
     },
   },
   "Resources": {
+    "BuildNotifyMessageLogGroup1F6700A3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/build_notify_message",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "DeleteLogStreamsLogGroupF423A89B": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/delete_log_streams",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetLogGroupsLogGroup1CD3D6E3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/get_log_groups",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "GetLogStreamsLogGroupB6942BE3": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/get_log_streams",
+        "RetentionInDays": 30,
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete",
+    },
     "Schedule83A77FD1": {
       "Properties": {
         "FlexibleTimeWindow": {
@@ -369,7 +461,13 @@ exports[`snapshot test 1`] = `
           },
           "S3Key": "HASH-REPLACED.zip",
         },
+        "FunctionName": "build_notify_message",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "BuildNotifyMessageLogGroup1F6700A3",
+          },
+        },
         "Role": {
           "Fn::GetAtt": [
             "buildnotifymessageServiceRoleB8AA7954",
@@ -482,7 +580,13 @@ exports[`snapshot test 1`] = `
           },
           "S3Key": "HASH-REPLACED.zip",
         },
+        "FunctionName": "delete_log_streams",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "DeleteLogStreamsLogGroupF423A89B",
+          },
+        },
         "Role": {
           "Fn::GetAtt": [
             "deletelogstreamsServiceRole859AA330",
@@ -600,7 +704,13 @@ exports[`snapshot test 1`] = `
           },
           "S3Key": "HASH-REPLACED.zip",
         },
+        "FunctionName": "get_log_groups",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetLogGroupsLogGroup1CD3D6E3",
+          },
+        },
         "Role": {
           "Fn::GetAtt": [
             "getloggroupsServiceRole2F7300D4",
@@ -718,7 +828,13 @@ exports[`snapshot test 1`] = `
           },
           "S3Key": "HASH-REPLACED.zip",
         },
+        "FunctionName": "get_log_streams",
         "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "GetLogStreamsLogGroupB6942BE3",
+          },
+        },
         "Role": {
           "Fn::GetAtt": [
             "getlogstreamsServiceRoleF2C01167",
