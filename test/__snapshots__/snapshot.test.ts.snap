@@ -10,59 +10,6 @@ exports[`snapshot test 1`] = `
     },
   },
   "Resources": {
-    "Eval41256dc5445742738ed917bc818694e54EB1134F": {
-      "DependsOn": [
-        "Eval41256dc5445742738ed917bc818694e5ServiceRoleA1AB6027",
-      ],
-      "Properties": {
-        "Code": {
-          "S3Bucket": {
-            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-ap-northeast-1",
-          },
-          "S3Key": "HASH-REPLACED.zip",
-        },
-        "Handler": "index.handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "Eval41256dc5445742738ed917bc818694e5ServiceRoleA1AB6027",
-            "Arn",
-          ],
-        },
-        "Runtime": "nodejs22.x",
-      },
-      "Type": "AWS::Lambda::Function",
-    },
-    "Eval41256dc5445742738ed917bc818694e5ServiceRoleA1AB6027": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "lambda.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
-              ],
-            ],
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Role",
-    },
     "Schedule83A77FD1": {
       "Properties": {
         "FlexibleTimeWindow": {
@@ -171,28 +118,28 @@ exports[`snapshot test 1`] = `
                   "Arn",
                 ],
               },
-              ""},"ParallelLogGroups":{"Type":"Parallel","End":true,"Branches":[{"StartAt":"GetLogStreamsMap","States":{"GetLogStreamsMap":{"Type":"Map","ResultPath":null,"End":true,"ItemsPath":"$.targetLogGroups","ItemSelector":{"eventTime.$":"$.eventTime","logGroupInfo.$":"$$.Map.Item.Value"},"ItemProcessor":{"ProcessorConfig":{"Mode":"INLINE"},"StartAt":"GetLogStreams","States":{"GetLogStreams":{"Next":"IsEmptyLogGroup","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":"",
+              ""},"ParallelLogGroups":{"Type":"Parallel","End":true,"Branches":[{"StartAt":"GetLogStreamsMap","States":{"GetLogStreamsMap":{"Type":"Map","ResultPath":"$.getLogStreamsResults","Next":"BuildNotifyMessage","ItemsPath":"$.targetLogGroups","ItemSelector":{"eventTime.$":"$.eventTime","logGroupInfo.$":"$$.Map.Item.Value"},"ItemProcessor":{"ProcessorConfig":{"Mode":"INLINE"},"StartAt":"GetLogStreams","States":{"GetLogStreams":{"Next":"IsEmptyLogGroup","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":"",
               {
                 "Fn::GetAtt": [
                   "getlogstreamsD20145F9",
                   "Arn",
                 ],
               },
-              ""},"IsEmptyLogGroup":{"Type":"Choice","Choices":[{"Variable":"$.isEmpty","BooleanEquals":true,"Next":"NotifyMessage"}],"Default":"DeleteLogStreams"},"DeleteLogStreams":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":"",
+              ""},"IsEmptyLogGroup":{"Type":"Choice","Choices":[{"Variable":"$.isEmpty","BooleanEquals":true,"Next":"EmptyLogGroup"}],"Default":"DeleteLogStreams"},"DeleteLogStreams":{"End":true,"Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":"",
               {
                 "Fn::GetAtt": [
                   "deletelogstreams9F60BE28",
                   "Arn",
                 ],
               },
-              ""},"NotifyMessage":{"Next":"NotifyEmptyLogGroup","Type":"Task","ResultPath":"$.notifyMessage","Resource":"",
+              ""},"EmptyLogGroup":{"Type":"Pass","End":true}}},"MaxConcurrency":1},"BuildNotifyMessage":{"Next":"HasEmptyLogGroups","Retry":[{"ErrorEquals":["Lambda.ClientExecutionTimeoutException","Lambda.ServiceException","Lambda.AWSLambdaException","Lambda.SdkClientException"],"IntervalSeconds":2,"MaxAttempts":6,"BackoffRate":2}],"Type":"Task","Resource":"",
               {
                 "Fn::GetAtt": [
-                  "Eval41256dc5445742738ed917bc818694e54EB1134F",
+                  "buildnotifymessageE60281A8",
                   "Arn",
                 ],
               },
-              "","Parameters":{"expression":"\`Region: \${$.region}, Loggroup: \${$.logGroupName} is empty.\`","expressionAttributeValues":{"$.region.$":"$.region","$.logGroupName.$":"$.logGroupName"}}},"NotifyEmptyLogGroup":{"End":true,"Type":"Task","Resource":"arn:",
+              "","Parameters":{"getLogStreamsResults.$":"$.getLogStreamsResults"}},"HasEmptyLogGroups":{"Type":"Choice","Choices":[{"Variable":"$.notifyMessage","StringGreaterThan":"","Next":"NotifyEmptyLogGroup"}],"Default":"SkipNotify"},"SkipNotify":{"Type":"Pass","End":true},"NotifyEmptyLogGroup":{"End":true,"Type":"Task","Resource":"arn:",
               {
                 "Ref": "AWS::Partition",
               },
@@ -200,7 +147,7 @@ exports[`snapshot test 1`] = `
               {
                 "Ref": "AWS::URLSuffix",
               },
-              "/123456789012/Queue","MessageBody":{"webhookname":"Develop","message.$":"$.notifyMessage"}}}}},"MaxConcurrency":1}}},{"StartAt":"SetRetentionMap","States":{"SetRetentionMap":{"Type":"Map","ResultPath":null,"End":true,"ItemsPath":"$.noRetentionLogGroups","ItemSelector":{"logGroupInfo.$":"$$.Map.Item.Value"},"ItemProcessor":{"ProcessorConfig":{"Mode":"INLINE"},"StartAt":"SetRetentionInDays","States":{"SetRetentionInDays":{"End":true,"Retry":[{"ErrorEquals":["CloudWatchLogs.CloudWatchLogsException","CloudWatchLogs.SdkClientException"],"IntervalSeconds":1,"MaxAttempts":5,"BackoffRate":2}],"Type":"Task","ResultPath":null,"Resource":"arn:",
+              "/123456789012/Queue","MessageBody":{"webhookname":"Develop","message.$":"$.notifyMessage"}}}}},{"StartAt":"SetRetentionMap","States":{"SetRetentionMap":{"Type":"Map","ResultPath":null,"End":true,"ItemsPath":"$.noRetentionLogGroups","ItemSelector":{"logGroupInfo.$":"$$.Map.Item.Value"},"ItemProcessor":{"ProcessorConfig":{"Mode":"INLINE"},"StartAt":"SetRetentionInDays","States":{"SetRetentionInDays":{"End":true,"Retry":[{"ErrorEquals":["CloudWatchLogs.CloudWatchLogsException","CloudWatchLogs.SdkClientException"],"IntervalSeconds":1,"MaxAttempts":5,"BackoffRate":2}],"Type":"Task","ResultPath":null,"Resource":"arn:",
               {
                 "Ref": "AWS::Partition",
               },
@@ -271,6 +218,37 @@ exports[`snapshot test 1`] = `
               "Resource": [
                 {
                   "Fn::GetAtt": [
+                    "buildnotifymessageE60281A8",
+                    "Arn",
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "buildnotifymessageE60281A8",
+                          "Arn",
+                        ],
+                      },
+                      ":*",
+                    ],
+                  ],
+                },
+              ],
+            },
+            {
+              "Action": "sqs:SendMessage",
+              "Effect": "Allow",
+              "Resource": "arn:aws:sqs:ap-northeast-1:123456789012:Queue",
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
                     "getlogstreamsD20145F9",
                     "Arn",
                   ],
@@ -318,37 +296,6 @@ exports[`snapshot test 1`] = `
               ],
             },
             {
-              "Action": "lambda:InvokeFunction",
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "Eval41256dc5445742738ed917bc818694e54EB1134F",
-                    "Arn",
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      {
-                        "Fn::GetAtt": [
-                          "Eval41256dc5445742738ed917bc818694e54EB1134F",
-                          "Arn",
-                        ],
-                      },
-                      ":*",
-                    ],
-                  ],
-                },
-              ],
-            },
-            {
-              "Action": "sqs:SendMessage",
-              "Effect": "Allow",
-              "Resource": "arn:aws:sqs:ap-northeast-1:123456789012:Queue",
-            },
-            {
               "Action": "logs:putRetentionPolicy",
               "Effect": "Allow",
               "Resource": "arn:aws:logs:*:*:log-group:*:*",
@@ -360,6 +307,91 @@ exports[`snapshot test 1`] = `
         "Roles": [
           {
             "Ref": "StateMachineRoleB840431D",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "buildnotifymessageE60281A8": {
+      "DependsOn": [
+        "buildnotifymessageServiceRoleDefaultPolicy796E36E1",
+        "buildnotifymessageServiceRoleB8AA7954",
+      ],
+      "Properties": {
+        "Architectures": [
+          "arm64",
+        ],
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-ap-northeast-1",
+          },
+          "S3Key": "HASH-REPLACED.zip",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "buildnotifymessageServiceRoleB8AA7954",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 30,
+        "TracingConfig": {
+          "Mode": "Active",
+        },
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "buildnotifymessageServiceRoleB8AA7954": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "buildnotifymessageServiceRoleDefaultPolicy796E36E1": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "buildnotifymessageServiceRoleDefaultPolicy796E36E1",
+        "Roles": [
+          {
+            "Ref": "buildnotifymessageServiceRoleB8AA7954",
           },
         ],
       },
