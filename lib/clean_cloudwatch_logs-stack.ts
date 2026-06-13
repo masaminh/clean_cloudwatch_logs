@@ -26,6 +26,10 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
   constructor (scope: construct.Construct, id: string, props: StackProps) {
     super(scope, id, props)
 
+    cdk.Tags.of(this).add('Project', 'clean_cloudwatch_logs')
+    cdk.Tags.of(this).add('Env', 'prod')
+    cdk.Tags.of(this).add('ManagedBy', 'cdk')
+
     const getLogGroupsLambda = new lambdaNodejs.NodejsFunction(this, 'get_log_groups', {
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.minutes(1),
