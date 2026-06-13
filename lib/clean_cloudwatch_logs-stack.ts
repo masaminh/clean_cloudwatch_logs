@@ -81,10 +81,19 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       payloadResponseOnly: true,
     })
 
-    const notifyMessage = new tasks.EvaluateExpression(this, 'NotifyMessage', {
-      // eslint-disable-next-line no-template-curly-in-string
-      expression: '`Region: ${$.region}, Loggroup: ${$.logGroupName} is empty.`',
-      resultPath: '$.notifyMessage',
+    const buildNotifyMessageLambda = new lambdaNodejs.NodejsFunction(this, 'build_notify_message', {
+      architecture: lambda.Architecture.ARM_64,
+      timeout: cdk.Duration.seconds(30),
+      tracing: lambda.Tracing.ACTIVE,
+      runtime: lambda.Runtime.NODEJS_22_X,
+    })
+
+    const buildNotifyMessage = new tasks.LambdaInvoke(this, 'BuildNotifyMessage', {
+      lambdaFunction: buildNotifyMessageLambda,
+      payload: sfn.TaskInput.fromObject({
+        getLogStreamsResults: sfn.JsonPath.listAt('$.getLogStreamsResults'),
+      }),
+      payloadResponseOnly: true,
     })
 
     const notifyEmptyLogGroup = new tasks.SqsSendMessage(this, 'NotifyEmptyLogGroup', {
@@ -95,6 +104,17 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       }),
     })
 
+    const skipNotify = new sfn.Pass(this, 'SkipNotify')
+
+    const hasEmptyLogGroups = new sfn.Choice(this, 'HasEmptyLogGroups')
+      .when(
+        sfn.Condition.stringGreaterThan('$.notifyMessage', ''),
+        notifyEmptyLogGroup
+      )
+      .otherwise(skipNotify)
+
+    const emptyLogGroup = new sfn.Pass(this, 'EmptyLogGroup')
+
     const getLogStreamsMap = new sfn.Map(this, 'GetLogStreamsMap', {
       itemsPath: sfn.JsonPath.stringAt('$.targetLogGroups'),
       itemSelector: {
@@ -102,7 +122,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
         'logGroupInfo.$': '$$.Map.Item.Value',
       },
       maxConcurrency: 1,
-      resultPath: sfn.JsonPath.DISCARD,
+      resultPath: '$.getLogStreamsResults',
     })
 
     const setRetention = new tasks.CallAwsService(this, 'SetRetentionInDays', {
@@ -133,10 +153,10 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
         new sfn.Choice(this, 'IsEmptyLogGroup')
           .when(
             sfn.Condition.booleanEquals('$.isEmpty', true),
-            notifyMessage.next(notifyEmptyLogGroup)
+            emptyLogGroup
           )
           .otherwise(deleteLogStreams)
-      )),
+      )).next(buildNotifyMessage).next(hasEmptyLogGroups),
       setRetentionMap.itemProcessor(setRetention)
     )
 
