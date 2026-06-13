@@ -29,6 +29,20 @@ exports[`snapshot test 1`] = `
           ],
         },
         "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
       },
       "Type": "AWS::Lambda::Function",
     },
@@ -58,6 +72,20 @@ exports[`snapshot test 1`] = `
                 ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
               ],
             ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
           },
         ],
       },
@@ -127,6 +155,20 @@ exports[`snapshot test 1`] = `
           ],
           "Version": "2012-10-17",
         },
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
       },
       "Type": "AWS::IAM::Role",
     },
@@ -214,6 +256,20 @@ exports[`snapshot test 1`] = `
             "Arn",
           ],
         },
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
       },
       "Type": "AWS::StepFunctions::StateMachine",
       "UpdateReplacePolicy": "Delete",
@@ -232,6 +288,20 @@ exports[`snapshot test 1`] = `
           ],
           "Version": "2012-10-17",
         },
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
       },
       "Type": "AWS::IAM::Role",
     },
@@ -388,6 +458,20 @@ exports[`snapshot test 1`] = `
           ],
         },
         "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
         "Timeout": 900,
         "TracingConfig": {
           "Mode": "Active",
@@ -421,6 +505,20 @@ exports[`snapshot test 1`] = `
                 ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
               ],
             ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
           },
         ],
       },
@@ -478,6 +576,20 @@ exports[`snapshot test 1`] = `
           ],
         },
         "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
         "Timeout": 60,
         "TracingConfig": {
           "Mode": "Active",
@@ -511,6 +623,20 @@ exports[`snapshot test 1`] = `
                 ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
               ],
             ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
           },
         ],
       },
@@ -568,6 +694,20 @@ exports[`snapshot test 1`] = `
           ],
         },
         "Runtime": "nodejs22.x",
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
+          },
+        ],
         "Timeout": 300,
         "TracingConfig": {
           "Mode": "Active",
@@ -630,6 +770,20 @@ exports[`snapshot test 1`] = `
                 ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
               ],
             ],
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Env",
+            "Value": "prod",
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cdk",
+          },
+          {
+            "Key": "Project",
+            "Value": "clean_cloudwatch_logs",
           },
         ],
       },
