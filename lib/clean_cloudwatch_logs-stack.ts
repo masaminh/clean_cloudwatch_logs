@@ -60,7 +60,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     })
 
     getLogGroupsLambda.addToRolePolicy(new iam.PolicyStatement({
-      resources: ['arn:aws:logs:*:*:log-group:*:*'],
+      resources: ['arn:aws:logs:*:*:log-group:*', 'arn:aws:logs:*:*:log-group:*:*'],
       actions: ['logs:DescribeLogGroups'],
     }))
 
@@ -80,7 +80,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
     })
 
     getLogStreamsLambda.addToRolePolicy(new iam.PolicyStatement({
-      resources: ['arn:aws:logs:*:*:log-group:*:log-stream:*'],
+      resources: ['arn:aws:logs:*:*:log-group:*', 'arn:aws:logs:*:*:log-group:*:log-stream:*'],
       actions: ['logs:DescribeLogStreams'],
     }))
 
@@ -157,7 +157,7 @@ export class CleanCloudwatchLogsStack extends cdk.Stack {
       service: 'cloudwatchlogs',
       action: 'putRetentionPolicy',
       iamAction: 'logs:putRetentionPolicy',
-      iamResources: ['arn:aws:logs:*:*:log-group:*:*'],
+      iamResources: ['arn:aws:logs:*:*:log-group:*', 'arn:aws:logs:*:*:log-group:*:*'],
       resultPath: sfn.JsonPath.DISCARD,
       parameters: {
         'LogGroupName.$': '$.logGroupInfo.name',

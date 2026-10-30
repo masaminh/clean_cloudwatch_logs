@@ -457,7 +457,10 @@ exports[`snapshot test 1`] = `
             {
               "Action": "logs:putRetentionPolicy",
               "Effect": "Allow",
-              "Resource": "arn:aws:logs:*:*:log-group:*:*",
+              "Resource": [
+                "arn:aws:logs:*:*:log-group:*",
+                "arn:aws:logs:*:*:log-group:*:*",
+              ],
             },
           ],
           "Version": "2012-10-17",
@@ -824,7 +827,10 @@ exports[`snapshot test 1`] = `
             {
               "Action": "logs:DescribeLogGroups",
               "Effect": "Allow",
-              "Resource": "arn:aws:logs:*:*:log-group:*:*",
+              "Resource": [
+                "arn:aws:logs:*:*:log-group:*",
+                "arn:aws:logs:*:*:log-group:*:*",
+              ],
             },
           ],
           "Version": "2012-10-17",
@@ -903,7 +909,10 @@ exports[`snapshot test 1`] = `
             {
               "Action": "logs:DescribeLogStreams",
               "Effect": "Allow",
-              "Resource": "arn:aws:logs:*:*:log-group:*:log-stream:*",
+              "Resource": [
+                "arn:aws:logs:*:*:log-group:*",
+                "arn:aws:logs:*:*:log-group:*:log-stream:*",
+              ],
             },
           ],
           "Version": "2012-10-17",
